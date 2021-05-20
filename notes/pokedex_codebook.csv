@@ -1,0 +1,54 @@
+Variable name,Format,Description
+[unnamed row],numerical,Row number starting at 0
+pokedex_number ,numerical,The entry number of the Pokemon in the National Pokedex
+name,string,The English name of the Pokemon
+german_name,string,The German name of the Pokemon
+japanese_name,string,The Original Japanese name of the Pokemon
+generation (raw dataset),"numerical (raw), string (cleaned)",The numbered generation which the Pokemon was first introduced 
+generation (cleaned dataset),string,The numbered generation which the Pokemon was first introduced presented as roman numerals
+status,string,"Denotes if the Pokemon is normal, sub legendary, legendary or mythical"
+species,string,The Category of the Pokemon
+type_number ,numerical,Number of types that the Pokemon has
+type_1,string,The Primary Type of the Pokemon
+type_2,string,The Secondary Type of the Pokemon. Blank if pokemon has no secondary type.
+combined_type (cleaned dataset),string,The types of the Pokemon in alphabetical order
+height_m,numerical,Height of the Pokemon in metres
+weight_kg,numerical,The Weight of the Pokemon in kilograms
+abilities_number,numerical,The number of abilities of the Pokemon
+ability_1,string,Name of the Pokemon's ability. Blank if the pokemon has no non-hidden abilities
+ability_2,string,Name of the Pokemon's second ability. Blank if the pokemon has no second ability.
+ability_hidden,string,Name of the hidden ability of the Pokemon. Blank if pokemon has no hidden ability.
+total_points,numerical,Total number of Base Points
+hp,numerical,The Base HP of the Pokemon
+attack,numerical,The Base Attack of the Pokemon
+defense,numerical,The Base Defense of the Pokemon
+sp_attack,numerical,The Base Special Attack of the Pokemon
+sp_defense,numerical,The Base Special Defense of the Pokemon
+speed,numerical,The Base Speed of the Pokemon
+catch_rate,numerical,Catch Rate of the Pokemon
+base_friendship,numerical,The Base Friendship of the Pokemon
+base_experience,numerical,The Base experience of a wild Pokemon when caught
+growth_rate,string,The Growth Rate of the Pokemon
+egg_type_number,numerical,Number of groups where a Pokemon can hatch
+egg_type_1,string,Name of the egg group where a Pokemon can hatch
+egg_type_2,string,Name of the second egg group where a Pokemon can hatch. Blank if there's only one egg group.
+percentage_male,numerical,The percentage of the species that are male. Blank if the Pokemon is genderless.
+egg_cycles,numerical,The number of cycles (255-257 steps) required to hatch an egg of the Pokemon
+against_normal,numerical,the amount of damage taken against a normal attack
+against_fire,numerical,the amount of damage taken against a fire attack
+against_water,numerical,the amount of damage taken against a water attack
+against_electric,numerical,the amount of damage taken against an electric attack
+against_grass,numerical,the amount of damage taken against a grass attack
+against_ice,numerical,the amount of damage taken against an ice attack
+against_fight,numerical,the amount of damage taken against a fight attack
+against_poison,numerical,the amount of damage taken against a poison attack
+against_ground,numerical,the amount of damage taken against a ground attack
+against_flying,numerical,the amount of damage taken against a flying attack
+against_psychic,numerical,the amount of damage taken against a psychic attack
+against_bug,numerical,the amount of damage taken against a bug attack
+against_rock,numerical,the amount of damage taken against a rock attack
+against_ghost,numerical,the amount of damage taken against a ghost attack
+against_dragon,numerical,the amount of damage taken against a dragon attack
+against_dark,numerical,the amount of damage taken against a dark attack
+against_steel,numerical,the amount of damage taken against a steel attack
+against_fairy,numerical,the amount of damage taken against a fairy attack

@@ -1,0 +1,351 @@
+---
+title: "P![pokeball, source: https://pngimg.com/image/27658](images/pokeball_PNG25x24.png)kém![pokeball, source: https://pngimg.com/image/27658](images/pokeball_PNG25x24.png)n Thr![pokeball](images/pokeball_PNG25x24.png)ugh The Generati![pokeball](images/pokeball_PNG25x24.png)ns"
+author: "Megan King"
+date: "14/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(packrat) #package management system
+library(tidyverse) #used for data wrangling
+library(here) #for a relative working directory
+library(knitr) #to knit to html document
+knitr::opts_chunk$set(echo = FALSE,fig.show="hold",warning=FALSE,results=TRUE,message=FALSE)
+
+##If you have run this code before, please remove lines 348-351 as a packrat bundle will already exist.
+
+```
+
+<img align ="left" width="200" height="250" src="https://pngimg.com/uploads/pokemon/pokemon_PNG141.png">
+
+\
+\
+
+
+Pokémon is a popular game series where Pokémon trainers catch and train fictional creatures called Pokémon to battle other trainers. I have chosen to focus this project on Pokémon as it is a franchise recognised by almost everyone. However, not everyone is aware of the depths of data behind these beloved pocket monsters. As there is a large competitive player base and regular additions to the series, it's possible that powercreep might occur. Powercreep is a process where new content that's introduced to a game series is continuously more powerful than older content. This leads to newer content being favoured by players, making older content redundant.
+
+
+
+## Data ![pokeball, source: https://pngimg.com/image/27658](images/pokeball_PNG30x29.png)rigins
+```{r data}
+#path to dataset
+pokedex <- here("data", "pokedex_(Update_05.20).csv")
+#loading dataset
+rawdf <- read.csv(pokedex)
+#path to codebook
+codebookcsv <- here("notes", "pokedex_codebook.csv")
+#loading codebook
+codebook <-read.csv(codebookcsv)
+```
+
+The dataset was retrieved from [Kaggle](https://www.kaggle.com/mariotormo/complete-pokemon-dataset-updated-090420) and was published by Mario Tormo Romero. The project only uses the ``pokedex_(Update_05.20).csv`` file. The data was collated from [pokemondb.net](https://pokemondb.net/) and [www.serebii.net](https://www.serebii.net/). It consists of a wealth of information on all known Pokémon species (and their variations) up to the ip's eighth generation.
+
+```{r raw data}
+#table of the first few columns and rows of the data and a summary of remaining columns
+tibble(rawdf) 
+```
+
+As you can see, the dataset is quite large so analysis will only focus on some of the variables. The table below provides descriptions of the variables used in analysis. The full codebook can be found on the [github repository](https://github.com/meganking1/psy6422).
+
+```{r codebook}
+#table for codebook without row names
+kable(codebook [c(2:3,7,9,13,20:26),], row.names = FALSE) 
+```
+
+## Research Questi![pokeball, source: https://pngimg.com/image/27658](images/pokeball_PNG20x19.png)ns
+
+The present visualisations aim to address the following questions:
+
+1. Has the introduction of new Pokémon in subsequent game generations resulted in powercreep?
+2. How has the distribution of base stats changed in new Pokémon across the generations?
+
+## Data Preparati![pokeball, source: https://pngimg.com/image/27658](images/pokeball_PNG20x19.png)n
+
+Luckily there wasn't too much data wrangling needed on this dataset.
+
+```{r data preparation, echo = TRUE}
+
+cleaneddf <- rawdf
+
+##change generation variable from numbers to roman numerals
+cleaneddf$generation <- as.character(as.roman(cleaneddf$generation))
+
+##rename defense and sp_defense to the English spellings
+cleaneddf <- cleaneddf %>%
+  rename(defence = defense) %>%
+  rename(sp_defence = sp_defense)
+
+##removing "PokÃ©mon" from species values
+#function to reverse strings by word
+reverse_words <- function(string)
+{
+  # split string by blank spaces
+  string_split = strsplit(as.character(string), split = " ")
+  # how many split terms?
+  string_length = length(string_split[[1]])
+  # decide what to do
+  if (string_length == 1) {
+    # one word (do nothing)
+    reversed_string = string_split[[1]]
+  } else {
+    # more than one word (collapse them)
+    reversed_split = string_split[[1]][string_length:1]
+    reversed_string = paste(reversed_split, collapse = " ")
+  }
+  # output
+  return(reversed_string)
+} 
+#reverse word order in species column
+cleaneddf$species <- sapply(cleaneddf[,8], reverse_words)
+
+#removing "PokÃ©mon" from species values
+cleaneddf <- cleaneddf %>%
+  separate(species, c(NA, "species"), sep = " ", extra = "merge", fill = "left")
+
+#reverting word order in species column
+cleaneddf$species <- sapply(cleaneddf[,8], reverse_words)
+
+##merging type_1 and type_2 columns alphabetically
+cleaneddf <- cleaneddf %>%
+  rowwise() %>%
+  mutate(combined_type = paste(sort(c(type_1, type_2)), collapse = " ")) %>%
+  ungroup()
+
+```
+*NB: the code for the ``reverse_words`` function was found at [www.gastonsanchez.com.](https://www.gastonsanchez.com/r4strings/reversing.html)*
+
+Following data cleaning, I subset the data so that it only included the columns I will be using. Below is a table that shows the first 5 rows of the subset data.
+
+```{r cleaned data}
+
+#subsetting the data to only include columns that will be analysed
+cleaneddf <- cleaneddf %>%
+  select(pokedex_number, name, generation, species, combined_type, total_points, hp, attack, defence, sp_attack, sp_defence, speed)
+#table
+head(cleaneddf, 5)
+```
+
+**Summary statistics are presented below:**
+
+```{r summary statistics, results = TRUE, echo = TRUE}
+
+library(vtable) #required for sumtable function
+
+#variables to include in the tables
+variables <- c('total_points', 'hp', 'attack', 'defence', 'sp_attack', 'sp_defence', 'speed')
+
+#table of summary statics across numerical variables
+sumoverall <- sumtable(cleaneddf,
+                       #specifying which variables to include in table
+                       vars = variables,
+                       #specifying which functions to include in the table
+                       summ = list(c('median(x)', 'mean(x)', 'sd(x)', 'min(x)', 'max(x)')),
+                       #specifying column names
+                       summ.names = list(c('Median', 'Mean', 'SD', 'Minimum Value', 'Maximum Value')),
+                       #how many decimal points to include
+                       digits = 2,
+                       #don't include trailing 0s
+                       fixed.digits = FALSE,
+                       #title of table
+                       title = 'Summary statistics')
+#print table
+sumoverall
+
+#table of mean and sd by generation
+sumbygroup <- sumtable(cleaneddf,
+                       #specify variables
+                       vars = variables,
+                       #specify functions to include in table
+                       summ = list(c('mean(x)', 'sd(x)')),
+                       #specify column names
+                       summ.names = list(c('Mean', 'SD')),
+                       #group by the generation variable
+                       group = "generation",
+                       #how many decimal points
+                       digits = 2,
+                       #don't include trailing 0s
+                       fixed.digits = FALSE,
+                       #title of table
+                       title = 'Mean and standard deviation by generation')
+#print table
+sumbygroup
+```
+
+*NB: Median values were not included in the summary statistics by generation because they are available in the visualisation*
+
+## Visualisati![pokeball, source: https://pngimg.com/image/27658](images/pokeball_PNG20x19.png)ns
+
+First, let's visualise whether there is any evidence of powercreep:
+
+```{r data visualisation 1, echo=TRUE}
+library(plotly) #required to build the boxplot
+
+###visualisation 1: total stats across generations
+
+#graph colour palette - each colour was inspired by a game that was released in that generation
+gen_colors <- c("#fad61d", #pokemon yellow
+                "#b4c5f6", #pokemon silver
+                "#5abd8b", #pokemon emerald
+                "#bd6ad5", #pokemon pearl
+                "#202029", #pokemon black
+                "#015f9f", #pokemon x
+                "#f59423", #pokemon sun
+                "#e5005a") #pokemon shield
+
+#extra information to add to datapoints on hover
+text <- ~paste(' Name: ', name,
+               '</br> Pokedex No: ', pokedex_number,
+               '</br> Type: ', combined_type,
+               '</br> Species: ', species)
+#graph type
+graph_type <- c("box")
+
+#show boxpoints
+boxpoints <- c("all")
+
+#width of jitter
+jitter <- c("1")
+
+#position of jitter 
+pointpos <- c("-2")
+
+#graph dimensions
+width <- c("900")
+height <- c("750")
+
+#set up base plot
+figtot <- plot_ly(cleaneddf,
+                  #set y variable
+                  y = ~total_points,
+                  #specifying that a different colour should be used for each pokemon generation
+                  color = ~generation,
+                  #specifying the colour palette
+                  colors = gen_colors,
+                  #specify graph type
+                  type = graph_type,
+                  #show datapoints
+                  boxpoints = boxpoints,
+                  #include jitter
+                  jitter = jitter,
+                  #jitter to display to the left of each boxplot
+                  pointpos = pointpos,
+                  #specify graph dimensions
+                  width = width,
+                  height = height,
+                  #adds extra information on hover, x & y values included by default
+                  text = text) %>%
+  #add layout information
+  layout(
+  #add title
+  title = "Total base statistics across Pokémon generations",
+  #add x axis label
+   xaxis = list(title = list(text = "Generation")),
+  #add  y axis label
+  yaxis = list(title = list( text = "Total points")),
+  #do not show legend
+  showlegend = FALSE)
+
+#plot boxplot
+figtot
+```
+```{r, save plot 1}
+library(htmlwidgets) #required to save plot
+#save plot
+htmlwidgets::saveWidget(as_widget(figtot), "graphs/plot_totalpoints.html")
+```
+
+We can see that the median total points were noticeably lower in the first three generations compared to the later generations. However, the average number of total points have remained relatively stable across generations. 
+
+There is also a general trend of the interquartile range increasing across the generations (gen 3 is the notable exception due to its large iqr compared to others). This suggests that there's more variety in the total base points in assigned to newer Pokémon.
+
+
+**What about if we look at individual stats?**
+
+```{r data visualisation 2, echo = TRUE}
+
+###visualisation 2: boxplot showing a breakdown of stats across generations
+
+#colours for traces were inspired by bulbapedia's base stats display
+hpcol<- "red"
+attcol <- "orange"
+defcol <- "darkmagenta" #replaced yellow to make visualisation clearer
+specattcol <- "deepskyblue"
+specdefcol <- "green"
+speedcol <- "hotpink"
+
+fig <- plot_ly(cleaneddf,
+               #specify graph type
+               type = graph_type,
+               #set graph dimensions
+               width = width,
+               height = height,
+               #adds hovertext
+               text = text)
+#add plots
+fig <- fig %>% add_trace(type = graph_type, x = ~hp, y = ~generation, name = "Health points", color=I(hpcol))
+fig <- fig %>% add_trace(type = graph_type, x = ~attack, y = ~generation, name = "Attack", color=I(attcol))
+fig <- fig %>% add_trace(type = graph_type, x = ~defence, y = ~generation, name = "Defence", color=I(defcol))
+fig <- fig %>% add_trace(type = graph_type, x = ~sp_attack, y = ~generation, name = "Special attack", color=I(specattcol))
+fig <- fig %>% add_trace(type = graph_type, x = ~sp_defence, y = ~generation, name = "Special defence", color=I(specdefcol))
+fig <- fig %>% add_trace(type = graph_type, x = ~speed, y = ~generation, name = "Speed", color=I(speedcol))
+
+fig <- fig %>% layout(
+  #grouping traces by generation
+  boxmode = "group",
+  #add title
+  title = "Base statistics across Pokémon generations",
+  #reverse axis so Gen 1 shows at the top
+   yaxis = list(autorange = "reversed",
+                #add y axis label
+                title = "Generation"),
+  #add  x axis label
+  xaxis = list(title = list( text = "Points"))
+  )
+
+#plot boxplot
+fig
+```
+```{r, save plot 2}
+#save plot
+htmlwidgets::saveWidget(as_widget(fig), "graphs/plot_basestats.html")
+
+```
+
+From the visualisation, we can see that:
+
+* Health points have remained stable across generations in both value and spread.
+* The base attack level has generally increased across generations.
+* There are no clear trends in the number of base points assigned to defence.
+* The minimum number of special attack points assigned to a Pokémon has increased in recent generations.
+* There are no clear trends in the number of base points assigned to special defence
+* There are no clear trends in the number of base points assigned to speed.
+* The majority of statistical outliers within a generation come from unique Pokémon.
+
+## Summary
+
+Overall, since the fourth generation there is no evidence of powercreep within the Pokémon games. Rather than adding increasingly more powerful Pokémon, focus may be on adding more specialised Pokémon. This would also explain why there are few trends in the distribution of individual stats across generations. Further evidence for specialisation comes from the fact that other than Eternatus Eternamax (who is an outlier on total base points), no Pokémon is an outlier on more than two of the base statistics.
+
+The main limitation with this dataset is that the data represents the most up to date stats for each Pokémon. Some Pokémon's stats have changed across the generations e.g. in generation one, special attack and special defense were both represented by a stat called special, which was separated in subsequent games. Therefore, this dataset may mask evidence of powercreep. It would be interesting to replicate these visualisations using the stats from when a Pokémon was introduced. Another option with the present dataset would be to compare stats across Pokémon types to see whether one type is superior.
+
+It would also be interesting to compare the most popular Pokémon with their base statistics. Do people like a specific Pokémon because they are the best, or do other factors such as nostalgia or cuteness come into play? Data for this could come from the Pokémon of the year survey conducted by Pokémon or Google search data.
+
+## Dependencies
+
+This file was created using:
+
+* RStudio Version 1.4.110
+* R version 4.0.5
+* Windows 10 Home, Version 2004, OS 19041.985
+
+
+Packrat was used for package management.
+
+If you would like to run this code, please download ``unbundlepackrat.r`` and ``assignment-2021-05-20.tar`` from the [github repository](https://github.com/meganking1/psy6422). 
+Instructions on how to unbundle ``assignment-2021-05-20.tar`` can be found within ``unbundlepackrat.r``.
+
+The full repository for this analysis can be found [here](https://github.com/meganking1/psy6422).
+
+```{r packrat bundle}
+#bundle project directory - delete if you have run this code before as a bundle will already exist
+packrat::bundle()
+```
