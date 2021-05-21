@@ -1,4 +1,4 @@
-# psy6422
+# PSY6422
 This is the repository for the PSY6422 project.
 
 In the main branch you will find:
